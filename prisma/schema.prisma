@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  name     String
+  role     Role     @default(VISITOR)
+  isActive Boolean  @default(true)
+  events   Event[]  @relation("CreatedEvents")
+  favorites Favorite[]
+  reservations Reservation[]
+  hashedRefreshToken String?
+}
+
+model Event {
+  id          String     @id @default(uuid())
+  title       String
+  description String
+  dateTime    DateTime
+  type        EventType
+  capacity    Int
+  imageUrl    String
+  createdBy   User       @relation("CreatedEvents", fields: [createdById], references: [id])
+  createdById String
+  institution Institution @relation(fields: [institutionId], references: [id])
+  institutionId String
+  favorites   Favorite[]
+  reservations Reservation[]
+}
+
+model Institution {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  type        InstitutionType
+  address     String
+  contactEmail String
+  imageUrl    String
+  events      Event[]
+}
+
+model Favorite {
+  id      String @id @default(uuid())
+  user    User   @relation(fields: [userId], references: [id])
+  userId  String
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  @@unique([userId, eventId])
+}
+
+model Reservation {
+  id      String @id @default(uuid())
+  user    User   @relation(fields: [userId], references: [id])
+  userId  String
+  event   Event  @relation(fields: [eventId], references: [id])
+  eventId String
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+}
+
+enum Role {
+  VISITOR
+  ORGANIZER
+  ADMIN
+}
+
+enum EventType {
+  CONCERT
+  EXHIBITION
+  THEATER
+  FESTIVAL
+}
+
+enum InstitutionType {
+  MUSEUM
+  GALLERY
+  THEATER
+}
