@@ -25,7 +25,7 @@ export class AuthService {
       user.id,
       tokens.refresh_token,
     );
-    return tokens;
+    return { user, ...tokens };
   }
 
   async login(email: string, password: string) {
@@ -40,7 +40,7 @@ export class AuthService {
       user.id,
       tokens.refresh_token,
     );
-    return tokens;
+    return { user, ...tokens };
   }
 
   async refreshTokens(userId: string, refreshToken: string) {
@@ -56,7 +56,7 @@ export class AuthService {
       user.id,
       tokens.refresh_token,
     );
-    return tokens;
+    return { user, ...tokens };
   }
 
   private async signTokens(userId: string, email: string) {
