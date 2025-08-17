@@ -1,34 +1,62 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { InstitutionService } from './institution.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateInstitutionDto } from './dto/create-institution.dto';
+import { QueryInstitutionsDto } from './dto/query-institution.dto';
 import { UpdateInstitutionDto } from './dto/update-institution.dto';
+import { InstitutionsService } from './institution.service';
 
-@Controller('institution')
-export class InstitutionController {
-  constructor(private readonly institutionService: InstitutionService) {}
+import { Role } from '@prisma/client';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { SelectInstitutionsDto } from './dto/select-institution.dto';
 
-  @Post()
-  create(@Body() createInstitutionDto: CreateInstitutionDto) {
-    return this.institutionService.create(createInstitutionDto);
-  }
+@Controller('institutions')
+export class InstitutionsController {
+  constructor(private readonly institutionsService: InstitutionsService) {}
 
   @Get()
-  findAll() {
-    return this.institutionService.findAll();
+  async findMany(@Query() q: QueryInstitutionsDto) {
+    return this.institutionsService.findMany(q);
+  }
+
+  @Get('select')
+  async select(@Query() query: SelectInstitutionsDto) {
+    return this.institutionsService.findAllForSelect(query);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.institutionService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    return this.institutionsService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateInstitutionDto: UpdateInstitutionDto) {
-    return this.institutionService.update(+id, updateInstitutionDto);
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.ORGANIZER)
+  async create(@Body() dto: CreateInstitutionDto) {
+    return this.institutionsService.create(dto);
+  }
+
+  @Put(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.ORGANIZER)
+  async update(@Param('id') id: string, @Body() dto: UpdateInstitutionDto) {
+    return this.institutionsService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.institutionService.remove(+id);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  async remove(@Param('id') id: string) {
+    return this.institutionsService.remove(id);
   }
 }

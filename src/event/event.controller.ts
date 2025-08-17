@@ -1,34 +1,53 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { EventService } from './event.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { OwnerOrAdminGuard } from 'src/auth/guards/owner-or-admin.guard';
+import { RequestWithUser } from 'src/auth/types/request-with-user.interface';
 import { CreateEventDto } from './dto/create-event.dto';
+import { QueryEventsDto } from './dto/query-events.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
+import { EventService } from './event.service';
 
-@Controller('event')
+@Controller('events')
 export class EventController {
-  constructor(private readonly eventService: EventService) {}
-
-  @Post()
-  create(@Body() createEventDto: CreateEventDto) {
-    return this.eventService.create(createEventDto);
-  }
+  constructor(private readonly eventsService: EventService) {}
 
   @Get()
-  findAll() {
-    return this.eventService.findAll();
+  async findMany(@Query() q: QueryEventsDto) {
+    return this.eventsService.findMany(q);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.eventService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    return this.eventsService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEventDto: UpdateEventDto) {
-    return this.eventService.update(+id, updateEventDto);
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  async create(@Body() dto: CreateEventDto, @Req() req: RequestWithUser) {
+    console.log('Creating event with data:', req.user);
+    return this.eventsService.create(dto, req.user.id);
+  }
+
+  @Put(':id')
+  @UseGuards(JwtAuthGuard, OwnerOrAdminGuard)
+  async update(@Param('id') id: string, @Body() dto: UpdateEventDto) {
+    return this.eventsService.update(id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.eventService.remove(+id);
+  @UseGuards(JwtAuthGuard, OwnerOrAdminGuard)
+  async remove(@Param('id') id: string) {
+    return this.eventsService.remove(id);
   }
 }

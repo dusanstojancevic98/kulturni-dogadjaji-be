@@ -1,26 +1,136 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateEventDto } from './dto/create-event.dto';
+import { QueryEventsDto } from './dto/query-events.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 
 @Injectable()
 export class EventService {
-  create(createEventDto: CreateEventDto) {
-    return 'This action adds a new event';
+  constructor(private prisma: PrismaService) {}
+
+  async create(dto: CreateEventDto, userId: string) {
+    console.log('Creating event with data:', dto);
+    const institution = await this.prisma.institution.findUnique({
+      where: { id: dto.institutionId },
+      select: { id: true },
+    });
+    console.log('Found institution:', institution);
+    if (!institution) throw new ForbiddenException('Institution not found');
+
+    return this.prisma.event.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+        dateTime: new Date(dto.dateTime),
+        type: dto.type,
+        capacity: dto.capacity,
+        imageUrl: dto.imageUrl,
+        createdById: userId,
+        institutionId: dto.institutionId,
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all event`;
+  async findMany(q: QueryEventsDto) {
+    const {
+      page = 1,
+      pageSize = 12,
+      q: text,
+      type,
+      from,
+      to,
+      institutionId,
+      createdById,
+    } = q;
+
+    const AND: Prisma.EventWhereInput[] = [];
+
+    if (text) {
+      AND.push({
+        OR: [
+          { title: { contains: text, mode: 'insensitive' } },
+          { description: { contains: text, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    if (type) {
+      AND.push({ type });
+    }
+
+    if (institutionId) {
+      AND.push({ institutionId });
+    }
+
+    if (createdById) {
+      AND.push({ createdById });
+    }
+
+    if (from) {
+      AND.push({ dateTime: { gte: new Date(from) } });
+    }
+
+    if (to) {
+      AND.push({ dateTime: { lte: new Date(to) } });
+    }
+
+    const where: Prisma.EventWhereInput = AND.length ? { AND } : {};
+
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.event.count({ where }),
+      this.prisma.event.findMany({
+        where,
+        orderBy: { dateTime: 'asc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: {
+          institution: { select: { id: true, name: true, type: true } },
+          createdBy: { select: { id: true, name: true, email: true } },
+          _count: { select: { favorites: true, reservations: true } },
+        },
+      }),
+    ]);
+
+    return { items, total, page, pageSize };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} event`;
+  async findOne(id: string) {
+    return this.prisma.event.findUniqueOrThrow({
+      where: { id },
+      include: {
+        institution: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            address: true,
+            contactEmail: true,
+          },
+        },
+        createdBy: { select: { id: true, name: true, email: true } },
+        _count: { select: { favorites: true, reservations: true } },
+      },
+    });
   }
 
-  update(id: number, updateEventDto: UpdateEventDto) {
-    return `This action updates a #${id} event`;
+  async update(id: string, dto: UpdateEventDto) {
+    return this.prisma.event.update({
+      where: { id },
+      data: {
+        title: dto.title,
+        description: dto.description,
+        dateTime: dto.dateTime ? new Date(dto.dateTime) : undefined,
+        type: dto.type,
+        capacity: dto.capacity,
+        imageUrl: dto.imageUrl,
+        institutionId: dto.institutionId,
+      },
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} event`;
+  async remove(id: string) {
+    await this.prisma.event.delete({ where: { id } });
+    return { ok: true };
   }
 }

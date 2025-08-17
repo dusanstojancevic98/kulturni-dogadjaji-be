@@ -5,10 +5,15 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      transformOptions: { enableImplicitConversion: true },
+    }),
+  );
   app.enableCors({
-    origin: 'http://localhost:5173', // ili '*' samo za razvoj
-    credentials: true, // ako koristiš cookies
+    origin: 'http://localhost:5173',
+    credentials: true,
   });
 
   await app.listen(3000);

@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
 
@@ -20,7 +20,7 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    const tokens = await this.signTokens(user.id, user.email);
+    const tokens = await this.signTokens(user);
     await this.userService.updateRefreshTokenHash(
       user.id,
       tokens.refresh_token,
@@ -35,7 +35,7 @@ export class AuthService {
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) throw new Error('Invalid credentials');
 
-    const tokens = await this.signTokens(user.id, user.email);
+    const tokens = await this.signTokens(user);
     await this.userService.updateRefreshTokenHash(
       user.id,
       tokens.refresh_token,
@@ -51,7 +51,7 @@ export class AuthService {
     const isMatch = await bcrypt.compare(refreshToken, user.hashedRefreshToken);
     if (!isMatch) throw new ForbiddenException('Access Denied');
 
-    const tokens = await this.signTokens(user.id, user.email);
+    const tokens = await this.signTokens(user);
     await this.userService.updateRefreshTokenHash(
       user.id,
       tokens.refresh_token,
@@ -59,8 +59,13 @@ export class AuthService {
     return { user, ...tokens };
   }
 
-  private async signTokens(userId: string, email: string) {
-    const payload = { sub: userId, email };
+  private async signTokens(user: User) {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      id: user.id,
+      role: user.role,
+    };
 
     const [access_token, refresh_token] = await Promise.all([
       this.jwtService.signAsync(payload, { expiresIn: '15m' }),

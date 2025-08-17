@@ -34,6 +34,11 @@ model Event {
   institutionId String
   favorites   Favorite[]
   reservations Reservation[]
+  @@index([dateTime])
+  @@index([type])
+  @@index([institutionId])
+  @@index([createdById])
+  @@index([title])
 }
 
 model Institution {
@@ -45,6 +50,9 @@ model Institution {
   contactEmail String
   imageUrl    String
   events      Event[]
+  
+  @@index([name])
+  @@index([type])
 }
 
 model Favorite {
