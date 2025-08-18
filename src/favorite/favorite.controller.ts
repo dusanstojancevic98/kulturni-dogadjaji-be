@@ -1,34 +1,23 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { FavoriteService } from './favorite.service';
-import { CreateFavoriteDto } from './dto/create-favorite.dto';
-import { UpdateFavoriteDto } from './dto/update-favorite.dto';
 
-@Controller('favorite')
+@Controller('favorites')
+@UseGuards(JwtAuthGuard)
 export class FavoriteController {
-  constructor(private readonly favoriteService: FavoriteService) {}
+  constructor(private readonly service: FavoriteService) {}
 
-  @Post()
-  create(@Body() createFavoriteDto: CreateFavoriteDto) {
-    return this.favoriteService.create(createFavoriteDto);
+  @Get('me')
+  async mine(@GetUser('id') userId: string) {
+    return this.service.listMineIds(userId);
   }
 
-  @Get()
-  findAll() {
-    return this.favoriteService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.favoriteService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFavoriteDto: UpdateFavoriteDto) {
-    return this.favoriteService.update(+id, updateFavoriteDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.favoriteService.remove(+id);
+  @Post(':eventId/toggle')
+  async toggle(
+    @GetUser('id') userId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.service.toggle(userId, eventId);
   }
 }

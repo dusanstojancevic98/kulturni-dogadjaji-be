@@ -1,26 +1,63 @@
-import { Injectable } from '@nestjs/common';
-import { CreateReservationDto } from './dto/create-reservation.dto';
-import { UpdateReservationDto } from './dto/update-reservation.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ReservationService {
-  create(createReservationDto: CreateReservationDto) {
-    return 'This action adds a new reservation';
+  constructor(private prisma: PrismaService) {}
+
+  async create(userId: string, eventId: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const event = await tx.event.findUnique({
+        where: { id: eventId },
+        select: {
+          id: true,
+          capacity: true,
+          _count: { select: { reservations: true } },
+        },
+      });
+      if (!event) throw new BadRequestException('Događaj ne postoji');
+
+      if (event._count.reservations >= event.capacity) {
+        throw new BadRequestException('Kapacitet je popunjen');
+      }
+      return tx.reservation.create({
+        data: { userId, eventId },
+      });
+    });
   }
 
-  findAll() {
-    return `This action returns all reservation`;
+  async remove(userId: string, eventId: string) {
+    await this.prisma.reservation.delete({
+      where: { userId_eventId: { userId, eventId } },
+    });
+    return { ok: true };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} reservation`;
+  async listMine(userId: string) {
+    const rows = await this.prisma.reservation.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        event: {
+          select: {
+            id: true,
+            title: true,
+            dateTime: true,
+            imageUrl: true,
+            type: true,
+          },
+        },
+        createdAt: true,
+      },
+    });
+    return rows;
   }
 
-  update(id: number, updateReservationDto: UpdateReservationDto) {
-    return `This action updates a #${id} reservation`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} reservation`;
+  async isReserved(userId: string, eventId: string) {
+    const res = await this.prisma.reservation.findUnique({
+      where: { userId_eventId: { userId, eventId } },
+      select: { id: true },
+    });
+    return { reserved: !!res };
   }
 }

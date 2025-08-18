@@ -1,26 +1,34 @@
 import { Injectable } from '@nestjs/common';
-import { CreateFavoriteDto } from './dto/create-favorite.dto';
-import { UpdateFavoriteDto } from './dto/update-favorite.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class FavoriteService {
-  create(createFavoriteDto: CreateFavoriteDto) {
-    return 'This action adds a new favorite';
+  constructor(private prisma: PrismaService) {}
+
+  async toggle(userId: string, eventId: string) {
+    const exists = await this.prisma.favorite.findUnique({
+      where: { userId_eventId: { userId, eventId } },
+      select: { id: true },
+    });
+
+    if (exists) {
+      await this.prisma.favorite.delete({
+        where: { userId_eventId: { userId, eventId } },
+      });
+      return { favorited: false };
+    }
+
+    await this.prisma.favorite.create({
+      data: { userId, eventId },
+    });
+    return { favorited: true };
   }
 
-  findAll() {
-    return `This action returns all favorite`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} favorite`;
-  }
-
-  update(id: number, updateFavoriteDto: UpdateFavoriteDto) {
-    return `This action updates a #${id} favorite`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} favorite`;
+  async listMineIds(userId: string) {
+    const rows = await this.prisma.favorite.findMany({
+      where: { userId },
+      select: { eventId: true },
+    });
+    return { eventIds: rows.map((r) => r.eventId) };
   }
 }
