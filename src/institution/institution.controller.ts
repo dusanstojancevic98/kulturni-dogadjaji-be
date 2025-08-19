@@ -12,7 +12,7 @@ import {
 import { CreateInstitutionDto } from './dto/create-institution.dto';
 import { QueryInstitutionsDto } from './dto/query-institution.dto';
 import { UpdateInstitutionDto } from './dto/update-institution.dto';
-import { InstitutionsService } from './institution.service';
+import { InstitutionService } from './institution.service';
 
 import { Role } from '@prisma/client';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -21,8 +21,8 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { SelectInstitutionsDto } from './dto/select-institution.dto';
 
 @Controller('institutions')
-export class InstitutionsController {
-  constructor(private readonly institutionsService: InstitutionsService) {}
+export class InstitutionController {
+  constructor(private readonly institutionsService: InstitutionService) {}
 
   @Get()
   async findMany(@Query() q: QueryInstitutionsDto) {

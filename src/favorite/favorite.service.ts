@@ -31,4 +31,30 @@ export class FavoriteService {
     });
     return { eventIds: rows.map((r) => r.eventId) };
   }
+
+  async getUserFavorites(userId: string) {
+    const rows = await this.prisma.favorite.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        event: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            dateTime: true,
+            type: true,
+            capacity: true,
+            imageUrl: true,
+            institutionId: true,
+            institution: { select: { id: true, name: true } },
+            _count: { select: { favorites: true, reservations: true } },
+            createdById: true,
+          },
+        },
+      },
+    });
+
+    return rows.map((r) => r.event);
+  }
 }

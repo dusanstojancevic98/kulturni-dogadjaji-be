@@ -7,7 +7,7 @@ import { SelectInstitutionsDto } from './dto/select-institution.dto';
 import { UpdateInstitutionDto } from './dto/update-institution.dto';
 
 @Injectable()
-export class InstitutionsService {
+export class InstitutionService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateInstitutionDto) {

@@ -2,6 +2,7 @@ import { EventType } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import {
   IsEnum,
+  IsIn,
   IsInt,
   IsISO8601,
   IsOptional,
@@ -46,4 +47,12 @@ export class QueryEventsDto {
   @IsOptional()
   @IsString()
   createdById?: string;
+
+  @IsOptional()
+  @IsIn(['date', 'title', 'favorites', 'reservations'])
+  sort?: 'date' | 'title' | 'favorites' | 'reservations' = 'date';
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  order?: 'asc' | 'desc' = 'asc';
 }

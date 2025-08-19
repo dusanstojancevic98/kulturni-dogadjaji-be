@@ -13,25 +13,25 @@ import { ReservationService } from './reservation.service';
 @Controller('reservations')
 @UseGuards(JwtAuthGuard)
 export class ReservationController {
-  constructor(private readonly service: ReservationService) {}
+  constructor(private readonly reservationService: ReservationService) {}
 
   @Post(':eventId')
   create(@GetUser('id') userId: string, @Param('eventId') eventId: string) {
-    return this.service.create(userId, eventId);
+    return this.reservationService.create(userId, eventId);
   }
 
   @Delete(':eventId')
   remove(@GetUser('id') userId: string, @Param('eventId') eventId: string) {
-    return this.service.remove(userId, eventId);
+    return this.reservationService.remove(userId, eventId);
   }
 
   @Get('me')
   mine(@GetUser('id') userId: string) {
-    return this.service.listMine(userId);
+    return this.reservationService.listMine(userId);
   }
 
   @Get(':eventId/status')
   status(@GetUser('id') userId: string, @Param('eventId') eventId: string) {
-    return this.service.isReserved(userId, eventId);
+    return this.reservationService.isReserved(userId, eventId);
   }
 }

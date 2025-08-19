@@ -1,45 +1,34 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RequestWithUser } from 'src/auth/types/request-with-user.interface';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ChangePasswordDto } from './dto/change-password';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserService } from './user.service';
 
 @UseGuards(JwtAuthGuard)
-@Controller('user')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get()
-  findAll() {
-    return this.userService.findAll();
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.userService.update(+id, updateUserDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.remove(+id);
-  }
-
   @Get('me')
-  getMe(@Req() req: RequestWithUser) {
-    return req.user;
+  getMe(@GetUser('id') userId: string) {
+    return this.userService.getMe(userId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+  @Patch('me')
+  updateMe(@GetUser('id') userId: string, @Body() dto: UpdateProfileDto) {
+    return this.userService.updateMe(userId, dto);
+  }
+
+  @Post('me/password')
+  changePassword(
+    @GetUser('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.userService.changePassword(
+      userId,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 }

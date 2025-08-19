@@ -18,6 +18,9 @@ model User {
   favorites Favorite[]
   reservations Reservation[]
   hashedRefreshToken String?
+
+  
+  createdAt DateTime @default(now())
 }
 
 model Event {
@@ -61,6 +64,8 @@ model Favorite {
   userId  String
   event   Event  @relation(fields: [eventId], references: [id])
   eventId String
+
+  createdAt DateTime @default(now())
 
   @@unique([userId, eventId])
 }

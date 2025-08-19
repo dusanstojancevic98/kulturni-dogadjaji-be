@@ -38,55 +38,53 @@ export class EventService {
       pageSize = 12,
       q: text,
       type,
-      from,
-      to,
       institutionId,
       createdById,
+      from,
+      to,
+      sort = 'date',
+      order = 'asc',
     } = q;
 
     const AND: Prisma.EventWhereInput[] = [];
-
-    if (text) {
+    if (text)
       AND.push({
         OR: [
           { title: { contains: text, mode: 'insensitive' } },
           { description: { contains: text, mode: 'insensitive' } },
         ],
       });
-    }
-
-    if (type) {
-      AND.push({ type });
-    }
-
-    if (institutionId) {
-      AND.push({ institutionId });
-    }
-
-    if (createdById) {
-      AND.push({ createdById });
-    }
-
-    if (from) {
-      AND.push({ dateTime: { gte: new Date(from) } });
-    }
-
-    if (to) {
-      AND.push({ dateTime: { lte: new Date(to) } });
-    }
+    if (type) AND.push({ type });
+    if (institutionId) AND.push({ institutionId });
+    if (createdById) AND.push({ createdById });
+    if (from) AND.push({ dateTime: { gte: new Date(from) } });
+    if (to) AND.push({ dateTime: { lte: new Date(to) } });
 
     const where: Prisma.EventWhereInput = AND.length ? { AND } : {};
+
+    const orderBy: Prisma.EventOrderByWithRelationInput[] = (() => {
+      switch (sort) {
+        case 'title':
+          return [{ title: order }];
+        case 'favorites':
+          return [{ favorites: { _count: order } }, { dateTime: 'asc' }];
+        case 'reservations':
+          return [{ reservations: { _count: order } }, { dateTime: 'asc' }];
+        case 'date':
+        default:
+          return [{ dateTime: order }];
+      }
+    })();
 
     const [total, items] = await this.prisma.$transaction([
       this.prisma.event.count({ where }),
       this.prisma.event.findMany({
         where,
-        orderBy: { dateTime: 'asc' },
+        orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
         include: {
-          institution: { select: { id: true, name: true, type: true } },
-          createdBy: { select: { id: true, name: true, email: true } },
+          institution: { select: { id: true, name: true } },
           _count: { select: { favorites: true, reservations: true } },
         },
       }),
@@ -132,5 +130,15 @@ export class EventService {
   async remove(id: string) {
     await this.prisma.event.delete({ where: { id } });
     return { ok: true };
+  }
+
+  async getEventsByUser(userId: string) {
+    return this.prisma.event.findMany({
+      where: { createdById: userId },
+      include: {
+        institution: true,
+        _count: { select: { reservations: true, favorites: true } },
+      },
+    });
   }
 }

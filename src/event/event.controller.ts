@@ -27,6 +27,12 @@ export class EventController {
     return this.eventsService.findMany(q);
   }
 
+  @Get('my')
+  @UseGuards(JwtAuthGuard)
+  async getMyEvents(@Req() req: RequestWithUser) {
+    return this.eventsService.getEventsByUser(req.user.id);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.eventsService.findOne(id);

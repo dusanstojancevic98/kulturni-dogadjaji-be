@@ -6,11 +6,16 @@ import { FavoriteService } from './favorite.service';
 @Controller('favorites')
 @UseGuards(JwtAuthGuard)
 export class FavoriteController {
-  constructor(private readonly service: FavoriteService) {}
+  constructor(private readonly favoriteService: FavoriteService) {}
 
   @Get('me')
   async mine(@GetUser('id') userId: string) {
-    return this.service.listMineIds(userId);
+    return this.favoriteService.listMineIds(userId);
+  }
+
+  @Get('my')
+  async my(@GetUser('id') userId: string) {
+    return this.favoriteService.getUserFavorites(userId);
   }
 
   @Post(':eventId/toggle')
@@ -18,6 +23,6 @@ export class FavoriteController {
     @GetUser('id') userId: string,
     @Param('eventId') eventId: string,
   ) {
-    return this.service.toggle(userId, eventId);
+    return this.favoriteService.toggle(userId, eventId);
   }
 }
