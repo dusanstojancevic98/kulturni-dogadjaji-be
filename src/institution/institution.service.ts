@@ -104,4 +104,48 @@ export class InstitutionService {
 
     return items;
   }
+
+  private distanceKm(aLat: number, aLng: number, bLat: number, bLng: number) {
+    const R = 6371; // km
+    const dLat = ((bLat - aLat) * Math.PI) / 180;
+    const dLng = ((bLng - aLng) * Math.PI) / 180;
+    const la1 = (aLat * Math.PI) / 180;
+    const la2 = (bLat * Math.PI) / 180;
+
+    const sinDlat = Math.sin(dLat / 2);
+    const sinDlng = Math.sin(dLng / 2);
+    const a =
+      sinDlat * sinDlat + Math.cos(la1) * Math.cos(la2) * sinDlng * sinDlng;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  async near(lat: number, lng: number, radiusKm = 10) {
+    const rows = await this.prisma.institution.findMany({
+      where: { latitude: { not: null }, longitude: { not: null } },
+      select: {
+        id: true,
+        name: true,
+        type: true,
+        address: true,
+        imageUrl: true,
+        latitude: true,
+        longitude: true,
+        _count: { select: { events: true } },
+      },
+    });
+
+    const withDistance = rows
+      .map((i) => {
+        const d =
+          i.latitude != null && i.longitude != null
+            ? this.distanceKm(lat, lng, i.latitude, i.longitude)
+            : Number.POSITIVE_INFINITY;
+        return { ...i, distanceKm: Math.round(d * 10) / 10 };
+      })
+      .filter((i) => i.distanceKm <= radiusKm)
+      .sort((a, b) => a.distanceKm - b.distanceKm);
+
+    return withDistance;
+  }
 }

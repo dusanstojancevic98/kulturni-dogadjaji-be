@@ -18,6 +18,7 @@ model User {
   favorites Favorite[]
   reservations Reservation[]
   hashedRefreshToken String?
+  reviews Review[]
 
   
   createdAt DateTime @default(now())
@@ -37,6 +38,8 @@ model Event {
   institutionId String
   favorites   Favorite[]
   reservations Reservation[]
+  reviews Review[]
+
   @@index([dateTime])
   @@index([type])
   @@index([institutionId])
@@ -53,6 +56,9 @@ model Institution {
   contactEmail String
   imageUrl    String
   events      Event[]
+
+  latitude   Float?
+  longitude  Float?
   
   @@index([name])
   @@index([type])
@@ -81,6 +87,21 @@ model Reservation {
 
   @@unique([userId, eventId])
 }
+
+model Review {
+  id        String   @id @default(uuid())
+  rating    Int      // 1–5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  user   User  @relation(fields: [userId], references: [id])
+  userId String
+  event  Event @relation(fields: [eventId], references: [id])
+  eventId String
+
+  @@unique([userId, eventId])
+}
+
 
 enum Role {
   VISITOR

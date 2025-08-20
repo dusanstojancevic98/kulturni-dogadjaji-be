@@ -38,10 +38,14 @@ export class EventController {
     return this.eventsService.findOne(id);
   }
 
+  @Get(':id/rating')
+  getRating(@Param('id') id: string) {
+    return this.eventsService.getRating(id);
+  }
+
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(@Body() dto: CreateEventDto, @Req() req: RequestWithUser) {
-    console.log('Creating event with data:', req.user);
     return this.eventsService.create(dto, req.user.id);
   }
 

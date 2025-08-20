@@ -64,6 +64,8 @@ async function main() {
       address: 'Trg republike 1, Beograd',
       contactEmail: 'info@narodnimuzej.rs',
       imageUrl: imgFor('Narodni muzej'),
+      latitude: 44.8176,
+      longitude: 20.4633,
     },
   });
 
@@ -75,6 +77,8 @@ async function main() {
       address: 'Ušće 10, Blok 15, Beograd',
       contactEmail: 'kontakt@msu.rs',
       imageUrl: imgFor('Muzej savremene umetnosti'),
+      latitude: 44.8236,
+      longitude: 20.4633,
     },
   });
 
@@ -86,6 +90,8 @@ async function main() {
       address: 'Svetogorska 12, Beograd',
       contactEmail: 'office@atelje212.rs',
       imageUrl: imgFor('Atelje 212'),
+      latitude: 44.8176,
+      longitude: 20.4633,
     },
   });
 
@@ -97,6 +103,8 @@ async function main() {
       address: 'Maršala Birjuzova 7, Beograd',
       contactEmail: 'remont@remont.net',
       imageUrl: imgFor('Galerija Remont'),
+      latitude: 44.8176,
+      longitude: 20.4633,
     },
   });
 

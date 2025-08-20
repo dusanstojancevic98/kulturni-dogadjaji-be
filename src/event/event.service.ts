@@ -10,12 +10,10 @@ export class EventService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateEventDto, userId: string) {
-    console.log('Creating event with data:', dto);
     const institution = await this.prisma.institution.findUnique({
       where: { id: dto.institutionId },
       select: { id: true },
     });
-    console.log('Found institution:', institution);
     if (!institution) throw new ForbiddenException('Institution not found');
 
     return this.prisma.event.create({
@@ -76,7 +74,7 @@ export class EventService {
       }
     })();
 
-    const [total, items] = await this.prisma.$transaction([
+    const [total, events] = await this.prisma.$transaction([
       this.prisma.event.count({ where }),
       this.prisma.event.findMany({
         where,
@@ -89,6 +87,29 @@ export class EventService {
         },
       }),
     ]);
+    const ids = events.map((e) => e.id);
+
+    const ratings = await this.prisma.review.groupBy({
+      by: ['eventId'],
+      where: { eventId: { in: ids } },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+
+    const ratingsMap = new Map(
+      ratings.map((r) => [
+        r.eventId,
+        {
+          avg: r._avg.rating ? Number(r._avg.rating.toFixed(2)) : 0,
+          count: r._count.rating ?? 0,
+        },
+      ]),
+    );
+
+    const items = events.map((e) => ({
+      ...e,
+      rating: ratingsMap.get(e.id) ?? { avg: 0, count: 0 },
+    }));
 
     return { items, total, page, pageSize };
   }
@@ -104,6 +125,8 @@ export class EventService {
             type: true,
             address: true,
             contactEmail: true,
+            latitude: true,
+            longitude: true,
           },
         },
         createdBy: { select: { id: true, name: true, email: true } },
@@ -140,5 +163,18 @@ export class EventService {
         _count: { select: { reservations: true, favorites: true } },
       },
     });
+  }
+
+  async getRating(eventId: string) {
+    const [agg] = await this.prisma.review.groupBy({
+      by: ['eventId'],
+      where: { eventId },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+    return {
+      avg: agg?._avg.rating ? Number(agg._avg.rating.toFixed(2)) : 0,
+      count: agg?._count.rating ?? 0,
+    };
   }
 }

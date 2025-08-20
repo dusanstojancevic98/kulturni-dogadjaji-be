@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -32,6 +33,21 @@ export class InstitutionController {
   @Get('select')
   async select(@Query() query: SelectInstitutionsDto) {
     return this.institutionsService.findAllForSelect(query);
+  }
+
+  @Get('near')
+  async near(
+    @Query('lat') lat?: string,
+    @Query('lng') lng?: string,
+    @Query('radiusKm') radiusKm?: string,
+  ) {
+    if (!lat || !lng) {
+      throw new BadRequestException('lat i lng su obavezni parametri');
+    }
+    const latN = parseFloat(lat);
+    const lngN = parseFloat(lng);
+    const r = radiusKm ? parseInt(radiusKm, 10) : 10;
+    return this.institutionsService.near(latN, lngN, r);
   }
 
   @Get(':id')

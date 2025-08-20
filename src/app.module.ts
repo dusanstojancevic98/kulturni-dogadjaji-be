@@ -11,6 +11,7 @@ import { InstitutionModule } from './institution/institution.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { UserModule } from './user/user.module';
+import { ReviewModule } from './review/review.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { UserModule } from './user/user.module';
     PrismaModule,
     AnalyticsModule,
     AdminUsersModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],
