@@ -29,7 +29,7 @@ export class FavoriteService {
       where: { userId },
       select: { eventId: true },
     });
-    return { eventIds: rows.map((r) => r.eventId) };
+    return { eventIds: rows.map((row) => row.eventId) };
   }
 
   async getUserFavorites(userId: string) {
@@ -55,6 +55,6 @@ export class FavoriteService {
       },
     });
 
-    return rows.map((r) => r.event);
+    return rows.map((rows) => rows.event);
   }
 }

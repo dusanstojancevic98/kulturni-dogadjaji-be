@@ -97,11 +97,11 @@ export class EventService {
     });
 
     const ratingsMap = new Map(
-      ratings.map((r) => [
-        r.eventId,
+      ratings.map((rating) => [
+        rating.eventId,
         {
-          avg: r._avg.rating ? Number(r._avg.rating.toFixed(2)) : 0,
-          count: r._count.rating ?? 0,
+          avg: rating._avg.rating ? Number(rating._avg.rating.toFixed(2)) : 0,
+          count: rating._count.rating ?? 0,
         },
       ]),
     );
