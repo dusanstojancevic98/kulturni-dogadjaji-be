@@ -1,5 +1,13 @@
 import { InstitutionType } from '@prisma/client';
-import { IsEmail, IsEnum, IsString, IsUrl, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  MinLength,
+} from 'class-validator';
 
 export class CreateInstitutionDto {
   @IsString()
@@ -22,4 +30,7 @@ export class CreateInstitutionDto {
 
   @IsUrl()
   imageUrl: string;
+
+  @IsOptional() @IsNumber() latitude?: number;
+  @IsOptional() @IsNumber() longitude?: number;
 }
